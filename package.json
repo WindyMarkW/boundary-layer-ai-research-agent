@@ -1,0 +1,22 @@
+{
+  "name": "boundary-layer-ai-research-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI and internal HTTP service for AI-assisted analysis of Boundary Layer data in Supabase.",
+  "type": "module",
+  "scripts": {
+    "ask": "node src/ask-database.js",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "insights": "node src/run-insights.js",
+    "lint": "node scripts/check-syntax.mjs",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "pg": "^8.20.0"
+  }
+}

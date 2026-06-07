@@ -1,0 +1,10 @@
+services:
+  boundary-layer-ai-research-agent:
+    build:
+      context: .
+    container_name: boundary-layer-ai-research-agent
+    env_file:
+      - .env
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
