@@ -29,6 +29,11 @@ export function buildWindFarmWhereClause(filters = {}, tableAlias = 'wf') {
     conditions.push(`${tableAlias}.id = ANY($${params.length})`);
   }
 
+  if (filters.windFarmName) {
+    params.push(filters.windFarmName);
+    conditions.push(`LOWER(BTRIM(${tableAlias}.name)) = LOWER(BTRIM($${params.length}))`);
+  }
+
   if (filters.country) {
     params.push(filters.country);
     conditions.push(`LOWER(${tableAlias}.country) = LOWER($${params.length})`);
@@ -56,7 +61,10 @@ export async function getSchemaCapabilities(client) {
       to_regclass('public.research_wind_farm_reports') IS NOT NULL AS has_research_reports,
       to_regclass('public.wind_farm_facts') IS NOT NULL AS has_wind_farm_facts,
       to_regclass('public.wind_farm_community_notes') IS NOT NULL AS has_community_notes,
-      to_regclass('public.research_report_evidence') IS NOT NULL AS has_research_report_evidence
+      to_regclass('public.research_report_evidence') IS NOT NULL AS has_research_report_evidence,
+      to_regclass('public.fact_elexon_generation_outturn') IS NOT NULL AS has_generation_outturn,
+      to_regclass('public.core_wind_farm_bmu_links') IS NOT NULL AS has_wind_farm_bmu_links,
+      to_regclass('public.dim_elexon_bm_units_current') IS NOT NULL AS has_current_bm_units
   `);
 
   const row = result.rows[0] || {};
@@ -66,6 +74,9 @@ export async function getSchemaCapabilities(client) {
     hasWindFarmFacts: row.has_wind_farm_facts === true,
     hasCommunityNotes: row.has_community_notes === true,
     hasResearchReportEvidence: row.has_research_report_evidence === true,
+    hasGenerationOutturn: row.has_generation_outturn === true,
+    hasWindFarmBmuLinks: row.has_wind_farm_bmu_links === true,
+    hasCurrentBmUnits: row.has_current_bm_units === true,
   };
 }
 

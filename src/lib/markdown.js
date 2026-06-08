@@ -175,6 +175,84 @@ export function buildAnalysisHighlights(pack) {
     }
   }
 
+  if (pack.analysis === 'wind-farm-production') {
+    const farm = pack.windFarm || {};
+    const production = pack.productionSummary || {};
+
+    if (production.supported === false) {
+      highlights.push(production.reason || 'Production reporting is not available for this database yet.');
+    } else {
+      highlights.push(
+        `${farm.name || 'This farm'} generated ${formatNumber(production.totalGenerationMwh)} MWh in ${production.windowLabel || 'the latest production window'}.`,
+      );
+
+      if (production.generationRank) {
+        highlights.push(
+          `${farm.name || 'This farm'} ranks #${formatNumber(production.generationRank)} out of ${formatNumber(production.peerCount)} UK farms in the selected slice by metered output.`,
+        );
+      }
+
+      if (production.capacityFactorPct != null) {
+        highlights.push(
+          `The estimated metered capacity factor for ${farm.name || 'this farm'} is ${formatNumber(production.capacityFactorPct)}%.`,
+        );
+      }
+
+      if (production.deltaGenerationPct != null) {
+        const direction = Number(production.deltaGenerationPct) >= 0 ? 'up' : 'down';
+        highlights.push(
+          `${farm.name || 'This farm'} is ${direction} ${formatNumber(Math.abs(Number(production.deltaGenerationPct)))}% versus the previous comparison window.`,
+        );
+      }
+
+      if ((production.mappedBmuCount || 0) <= 0) {
+        highlights.push(
+          `${farm.name || 'This farm'} currently has no active BMU mapping in the production feed, so any public narrative should lead with that data caveat.`,
+        );
+      }
+    }
+  }
+
+  if (pack.analysis === 'uk-production-brief') {
+    const production = pack.productionSummary || {};
+    const topFarm = pack.tables?.topGeneratingFarms?.[0];
+    const topCapacityFactorFarm = pack.tables?.highestCapacityFactorFarms?.[0];
+    const unmappedFarm = pack.tables?.unmappedOperationalFarms?.[0];
+
+    if (production.supported === false) {
+      highlights.push(production.reason || 'Production reporting is not available for this database yet.');
+    } else {
+      highlights.push(
+        `The selected UK slice generated ${formatNumber(production.totalGenerationMwh)} MWh in ${production.windowLabel || 'the latest production window'}.`,
+      );
+
+      if (production.deltaGenerationPct != null) {
+        const direction = Number(production.deltaGenerationPct) >= 0 ? 'up' : 'down';
+        highlights.push(
+          `That is ${direction} ${formatNumber(Math.abs(Number(production.deltaGenerationPct)))}% versus the previous comparison window.`,
+        );
+      }
+
+      if (topFarm) {
+        highlights.push(
+          `${topFarm.name} led the slice with ${formatNumber(topFarm.current_generation_mwh)} MWh of metered generation.`,
+        );
+      }
+
+      if (topCapacityFactorFarm) {
+        highlights.push(
+          `${topCapacityFactorFarm.name} posted the strongest estimated capacity factor at ${formatNumber(topCapacityFactorFarm.capacity_factor_pct)}%.`,
+        );
+      }
+
+      if (unmappedFarm) {
+        highlights.push(
+          `${unmappedFarm.name} is a large coverage gap because it has ${formatNumber(unmappedFarm.power_mw)} MW recorded capacity but no active BMU mapping.`,
+        );
+      }
+    }
+  }
+
   return highlights;
 }
 
@@ -203,6 +281,73 @@ export function renderAnalysisMarkdown(pack) {
     lines.push(`- Published reports: ${formatNumber(pack.researchCoverage?.published_count)}`);
     lines.push(`- Draft reports: ${formatNumber(pack.researchCoverage?.draft_count)}`);
     lines.push(`- Farms without reports: ${formatNumber(pack.researchCoverage?.missing_count)}`);
+  }
+
+  if (pack.windFarm) {
+    lines.push('', '## Focus Farm');
+    lines.push(`- Wind farm: ${pack.windFarm.name}`);
+    lines.push(`- Country: ${pack.windFarm.country || 'n/a'}`);
+    lines.push(`- Type: ${pack.windFarm.type || 'n/a'}`);
+    lines.push(`- Status: ${pack.windFarm.status || 'n/a'}`);
+    lines.push(`- Recorded capacity MW: ${formatNumber(pack.windFarm.power_mw)}`);
+    lines.push(`- Turbines: ${formatNumber(pack.windFarm.turbine_count)}`);
+    lines.push(`- Start year: ${formatNumber(pack.windFarm.start_year)}`);
+  }
+
+  if (pack.productionWindow) {
+    lines.push('', '## Production Window');
+    lines.push(`- Current window: ${pack.productionWindow.startDate || 'n/a'} to ${pack.productionWindow.endDate || 'n/a'}`);
+    lines.push(`- Previous window: ${pack.productionWindow.previousStartDate || 'n/a'} to ${pack.productionWindow.previousEndDate || 'n/a'}`);
+    lines.push(`- Latest available settlement date: ${pack.productionWindow.latestAvailableDate || 'n/a'}`);
+  }
+
+  if (pack.productionSummary) {
+    lines.push('', '## Production Snapshot');
+    lines.push(`- Production supported: ${pack.productionSummary.supported === false ? 'no' : 'yes'}`);
+
+    if (pack.productionSummary.reason) {
+      lines.push(`- Support note: ${pack.productionSummary.reason}`);
+    }
+
+    lines.push(`- Current generation MWh: ${formatNumber(pack.productionSummary.totalGenerationMwh)}`);
+    lines.push(`- Previous generation MWh: ${formatNumber(pack.productionSummary.previousGenerationMwh)}`);
+    lines.push(`- Delta generation MWh: ${formatNumber(pack.productionSummary.deltaGenerationMwh)}`);
+    lines.push(`- Delta generation %: ${formatNumber(pack.productionSummary.deltaGenerationPct)}`);
+    lines.push(`- Average daily generation MWh: ${formatNumber(pack.productionSummary.averageDailyGenerationMwh)}`);
+    lines.push(`- Estimated capacity factor %: ${formatNumber(pack.productionSummary.capacityFactorPct)}`);
+    lines.push(`- Window days with data: ${formatNumber(pack.productionSummary.currentDayCount)}`);
+    lines.push(`- Mapped BMUs: ${formatNumber(pack.productionSummary.mappedBmuCount)}`);
+
+    if (pack.productionSummary.generationRank) {
+      lines.push(`- Generation rank: ${formatNumber(pack.productionSummary.generationRank)} of ${formatNumber(pack.productionSummary.peerCount)}`);
+    }
+
+    if (pack.productionSummary.capacityFactorRank) {
+      lines.push(`- Capacity factor rank: ${formatNumber(pack.productionSummary.capacityFactorRank)} of ${formatNumber(pack.productionSummary.peerCount)}`);
+    }
+
+    if (pack.productionSummary.mappedCapacityMw != null) {
+      lines.push(`- Mapped capacity MW: ${formatNumber(pack.productionSummary.mappedCapacityMw)}`);
+    }
+
+    if (pack.productionSummary.unmappedCapacityMw != null) {
+      lines.push(`- Unmapped capacity MW: ${formatNumber(pack.productionSummary.unmappedCapacityMw)}`);
+    }
+  }
+
+  if (Array.isArray(pack.storyAngles) && pack.storyAngles.length > 0) {
+    lines.push('', '## LinkedIn Angles');
+
+    for (const item of pack.storyAngles) {
+      const fragments = [item.angle];
+      if (item.evidence) {
+        fragments.push(`Evidence: ${item.evidence}`);
+      }
+      if (item.caveat) {
+        fragments.push(`Caveat: ${item.caveat}`);
+      }
+      lines.push(`- ${fragments.join(' ')}`);
+    }
   }
 
   const tableSections = [];
@@ -319,6 +464,121 @@ export function renderAnalysisMarkdown(pack) {
         { key: 'emodnet_value', label: 'EMODnet' },
         { key: 'research_value', label: 'Research' },
         { key: 'community_value', label: 'Community' },
+      ],
+    });
+  }
+
+  if (pack.tables?.dailyGeneration) {
+    tableSections.push({
+      title: 'Daily Generation',
+      rows: pack.tables.dailyGeneration,
+      columns: [
+        { key: 'settlement_date', label: 'Date', type: 'date' },
+        { key: 'generation_mwh', label: 'Generation MWh', type: 'number' },
+        { key: 'interval_count', label: 'Intervals', type: 'number' },
+        { key: 'published_at', label: 'Published At', type: 'date' },
+      ],
+    });
+  }
+
+  if (pack.tables?.linkedBmus) {
+    tableSections.push({
+      title: 'Linked BMUs',
+      rows: pack.tables.linkedBmus,
+      columns: [
+        { key: 'bmu_id', label: 'BMU ID' },
+        { key: 'national_grid_bmu_id', label: 'National Grid BMU' },
+        { key: 'bm_unit_name', label: 'BM Unit Name' },
+        { key: 'lead_party_name', label: 'Lead Party' },
+        { key: 'allocation_factor', label: 'Allocation', type: 'number' },
+        { key: 'confidence', label: 'Confidence', type: 'number' },
+        { key: 'mapping_source', label: 'Source' },
+      ],
+    });
+  }
+
+  if (pack.tables?.peerComparison) {
+    tableSections.push({
+      title: 'Peer Comparison',
+      rows: pack.tables.peerComparison,
+      columns: [
+        { key: 'generation_rank', label: 'Rank', type: 'number' },
+        { key: 'name', label: 'Wind Farm' },
+        { key: 'current_generation_mwh', label: 'Current MWh', type: 'number' },
+        { key: 'delta_generation_pct', label: 'Delta %', type: 'number' },
+        { key: 'capacity_factor_pct', label: 'Capacity Factor %', type: 'number' },
+        { key: 'mapped_bmu_count', label: 'Mapped BMUs', type: 'number' },
+      ],
+    });
+  }
+
+  if (pack.tables?.topGeneratingFarms) {
+    tableSections.push({
+      title: 'Top Generating Farms',
+      rows: pack.tables.topGeneratingFarms,
+      columns: [
+        { key: 'generation_rank', label: 'Rank', type: 'number' },
+        { key: 'name', label: 'Wind Farm' },
+        { key: 'current_generation_mwh', label: 'Current MWh', type: 'number' },
+        { key: 'delta_generation_pct', label: 'Delta %', type: 'number' },
+        { key: 'capacity_factor_pct', label: 'Capacity Factor %', type: 'number' },
+        { key: 'mapped_bmu_count', label: 'Mapped BMUs', type: 'number' },
+      ],
+    });
+  }
+
+  if (pack.tables?.highestCapacityFactorFarms) {
+    tableSections.push({
+      title: 'Highest Capacity Factor Farms',
+      rows: pack.tables.highestCapacityFactorFarms,
+      columns: [
+        { key: 'capacity_factor_rank', label: 'Rank', type: 'number' },
+        { key: 'name', label: 'Wind Farm' },
+        { key: 'capacity_factor_pct', label: 'Capacity Factor %', type: 'number' },
+        { key: 'current_generation_mwh', label: 'Current MWh', type: 'number' },
+        { key: 'power_mw', label: 'Capacity MW', type: 'number' },
+      ],
+    });
+  }
+
+  if (pack.tables?.biggestGains) {
+    tableSections.push({
+      title: 'Biggest Gains',
+      rows: pack.tables.biggestGains,
+      columns: [
+        { key: 'name', label: 'Wind Farm' },
+        { key: 'delta_generation_pct', label: 'Delta %', type: 'number' },
+        { key: 'delta_generation_mwh', label: 'Delta MWh', type: 'number' },
+        { key: 'current_generation_mwh', label: 'Current MWh', type: 'number' },
+        { key: 'previous_generation_mwh', label: 'Previous MWh', type: 'number' },
+      ],
+    });
+  }
+
+  if (pack.tables?.biggestDrops) {
+    tableSections.push({
+      title: 'Biggest Drops',
+      rows: pack.tables.biggestDrops,
+      columns: [
+        { key: 'name', label: 'Wind Farm' },
+        { key: 'delta_generation_pct', label: 'Delta %', type: 'number' },
+        { key: 'delta_generation_mwh', label: 'Delta MWh', type: 'number' },
+        { key: 'current_generation_mwh', label: 'Current MWh', type: 'number' },
+        { key: 'previous_generation_mwh', label: 'Previous MWh', type: 'number' },
+      ],
+    });
+  }
+
+  if (pack.tables?.unmappedOperationalFarms) {
+    tableSections.push({
+      title: 'Unmapped Operational Farms',
+      rows: pack.tables.unmappedOperationalFarms,
+      columns: [
+        { key: 'name', label: 'Wind Farm' },
+        { key: 'country', label: 'Country' },
+        { key: 'power_mw', label: 'Capacity MW', type: 'number' },
+        { key: 'status', label: 'Status' },
+        { key: 'mapped_bmu_count', label: 'Mapped BMUs', type: 'number' },
       ],
     });
   }

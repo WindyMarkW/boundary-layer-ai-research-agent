@@ -8,6 +8,7 @@ import { renderQuestionFallbackMarkdown } from './lib/markdown.js';
 import { loadPromptTemplate, buildQuestionPrompt } from './lib/prompt.js';
 import { routeQuestionToAnalyses } from './lib/question-router.js';
 import { buildTimestampSlug, getOutputDirectory, saveJsonFile, saveTextFile, slugifyFileSegment } from './lib/report-output.js';
+import { parseDateOnlyValue, parsePositiveIntegerValue } from './lib/production-queries.js';
 import {
   DEFAULT_AI_PROVIDER,
   getAiProvider,
@@ -55,6 +56,30 @@ export function parseAskArgs(argv) {
       continue;
     }
 
+    if (argv[i] === '--wind-farm-name' && argv[i + 1]) {
+      args.filters.windFarmName = argv[i + 1].trim();
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--start-date' && argv[i + 1]) {
+      args.filters.startDate = parseDateOnlyValue(argv[i + 1], 'start date');
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--end-date' && argv[i + 1]) {
+      args.filters.endDate = parseDateOnlyValue(argv[i + 1], 'end date');
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--lookback-days' && argv[i + 1]) {
+      args.filters.lookbackDays = parsePositiveIntegerValue(argv[i + 1], 'lookback days');
+      i += 1;
+      continue;
+    }
+
     if (argv[i] === '--provider' && argv[i + 1]) {
       args.provider = argv[i + 1].trim();
       i += 1;
@@ -85,7 +110,7 @@ export async function runAskWorkflow({
   saveArtifacts = true,
   createClient = createDatabaseClient,
 } = {}) {
-  const routedAnalyses = routeQuestionToAnalyses(question);
+  const routedAnalyses = routeQuestionToAnalyses(question, filters);
   const client = createClient();
   await client.connect();
 

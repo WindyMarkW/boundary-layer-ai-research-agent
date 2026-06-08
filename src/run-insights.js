@@ -8,6 +8,7 @@ import { requestMarkdownWithProvider } from './lib/ai-provider.js';
 import { renderAnalysisMarkdown } from './lib/markdown.js';
 import { loadPromptTemplate, buildAnalysisPrompt } from './lib/prompt.js';
 import { buildTimestampSlug, getOutputDirectory, saveJsonFile, saveTextFile, slugifyFileSegment } from './lib/report-output.js';
+import { parseDateOnlyValue, parsePositiveIntegerValue } from './lib/production-queries.js';
 import {
   DEFAULT_AI_PROVIDER,
   DEFAULT_ANALYSIS,
@@ -16,6 +17,30 @@ import {
   getModelForProvider,
 } from './lib/runtime-config.js';
 import { parseIdsValue } from './lib/queries.js';
+
+function buildFilterLabel(filters = {}) {
+  const segments = [
+    filters.country || 'all-countries',
+    filters.windFarmType || 'all-types',
+    filters.status || 'all-statuses',
+  ];
+
+  if (filters.windFarmName) {
+    segments.push(filters.windFarmName);
+  }
+
+  if (Array.isArray(filters.ids) && filters.ids.length > 0) {
+    segments.push(`ids-${filters.ids.join('-')}`);
+  }
+
+  if (filters.startDate && filters.endDate) {
+    segments.push(`${filters.startDate}-to-${filters.endDate}`);
+  } else if (filters.lookbackDays) {
+    segments.push(`${filters.lookbackDays}d`);
+  }
+
+  return slugifyFileSegment(segments.join('-'));
+}
 
 export function parseRunInsightsArgs(argv) {
   const args = {
@@ -54,6 +79,30 @@ export function parseRunInsightsArgs(argv) {
 
     if (argv[i] === '--ids' && argv[i + 1]) {
       args.filters.ids = parseIdsValue(argv[i + 1]);
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--wind-farm-name' && argv[i + 1]) {
+      args.filters.windFarmName = argv[i + 1].trim();
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--start-date' && argv[i + 1]) {
+      args.filters.startDate = parseDateOnlyValue(argv[i + 1], 'start date');
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--end-date' && argv[i + 1]) {
+      args.filters.endDate = parseDateOnlyValue(argv[i + 1], 'end date');
+      i += 1;
+      continue;
+    }
+
+    if (argv[i] === '--lookback-days' && argv[i + 1]) {
+      args.filters.lookbackDays = parsePositiveIntegerValue(argv[i + 1], 'lookback days');
       i += 1;
       continue;
     }
@@ -133,13 +182,7 @@ export async function runInsightsWorkflow({
     if (saveArtifacts) {
       const outputDirectory = getOutputDirectory();
       const timestamp = buildTimestampSlug();
-      const filterLabel = slugifyFileSegment(
-        [
-          filters.country || 'all-countries',
-          filters.windFarmType || 'all-types',
-          filters.status || 'all-statuses',
-        ].join('-'),
-      );
+      const filterLabel = buildFilterLabel(filters);
       const stem = `${timestamp}-${slugifyFileSegment(analysis)}-${filterLabel}`;
       const jsonPath = path.join(outputDirectory, 'analysis', `${stem}.json`);
       const markdownPath = path.join(outputDirectory, 'analysis', `${stem}.md`);

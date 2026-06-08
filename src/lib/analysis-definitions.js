@@ -19,6 +19,16 @@ export const ANALYSIS_DEFINITIONS = [
     title: 'Priority Targets',
     description: 'Combined queue of the most valuable next research and cleanup targets.',
   },
+  {
+    name: 'wind-farm-production',
+    title: 'Wind Farm Production Report',
+    description: 'Single-farm metered generation brief with UK ranking context, daily trend, and post-ready story angles.',
+  },
+  {
+    name: 'uk-production-brief',
+    title: 'UK Production Brief',
+    description: 'UK-wide metered generation overview with leaders, movers, coverage gaps, and LinkedIn-friendly story hooks.',
+  },
 ];
 
 const ANALYSIS_BY_NAME = new Map(

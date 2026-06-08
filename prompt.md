@@ -9,6 +9,11 @@ Return markdown with these sections:
 ## Key Insights
 - 3 to 5 concise bullets
 
+## LinkedIn Angles
+- 2 to 4 externally interesting but evidence-led post angles when the pack includes production or story-angle data
+- each bullet should name the farm or slice, the metric, and why it is interesting
+- if the pack is not production-oriented, omit this section
+
 ## Data Risks
 - note data-quality gaps, uncertainty, or missing coverage
 
@@ -19,3 +24,4 @@ Rules:
 - If the data is missing or ambiguous, say so plainly.
 - Prefer naming specific farms, countries, and fields when they appear in the input.
 - Keep the answer decision-oriented rather than verbose.
+- Do not use outside context or generic wind-industry commentary.

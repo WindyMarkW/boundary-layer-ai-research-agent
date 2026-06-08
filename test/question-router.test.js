@@ -19,3 +19,18 @@ test('falls back to a broad analysis set when the question is generic', () => {
 
   assert.deepEqual(analyses, ['portfolio-overview', 'data-quality', 'research-coverage']);
 });
+
+test('routes production questions to the UK production brief', () => {
+  const analyses = routeQuestionToAnalyses('Which UK wind farms had the highest generation this week?');
+
+  assert.deepEqual(analyses, ['uk-production-brief']);
+});
+
+test('routes targeted production questions to the wind-farm production report', () => {
+  const analyses = routeQuestionToAnalyses(
+    'Give me a production profile for this wind farm.',
+    { ids: [101] },
+  );
+
+  assert.deepEqual(analyses, ['uk-production-brief', 'wind-farm-production']);
+});

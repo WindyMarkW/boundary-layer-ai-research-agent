@@ -1,4 +1,4 @@
-export function routeQuestionToAnalyses(question) {
+export function routeQuestionToAnalyses(question, filters = {}) {
   const normalized = String(question || '').trim().toLowerCase();
 
   if (!normalized) {
@@ -21,6 +21,20 @@ export function routeQuestionToAnalyses(question) {
 
   if (/(next|priority|priorit|should we|where should|what should we research)/.test(normalized)) {
     analyses.add('priority-targets');
+  }
+
+  const hasProductionIntent = /(production|generate|generation|output|load factor|capacity factor|metered|mwh)/.test(normalized);
+  const hasWindFarmTarget = Boolean(
+    (Array.isArray(filters.ids) && filters.ids.length > 0) ||
+    (typeof filters.windFarmName === 'string' && filters.windFarmName.trim()),
+  );
+
+  if (hasProductionIntent) {
+    analyses.add('uk-production-brief');
+
+    if (hasWindFarmTarget || /(this farm|that farm|site profile|single farm|specific farm)/.test(normalized)) {
+      analyses.add('wind-farm-production');
+    }
   }
 
   if (analyses.size === 0) {

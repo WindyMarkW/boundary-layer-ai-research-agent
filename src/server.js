@@ -156,6 +156,7 @@ const server = http.createServer(async (request, response) => {
       sendJson(response, 200, {
         result: {
           analysis: result.analysis,
+          pack: result.pack,
           providerUsed: result.providerUsed,
           modelUsed: result.modelUsed,
           artifactPaths: result.artifactPaths,
@@ -170,6 +171,7 @@ const server = http.createServer(async (request, response) => {
       result: {
         question: result.question,
         routedAnalyses: result.routedAnalyses,
+        packs: result.packs,
         providerUsed: result.providerUsed,
         modelUsed: result.modelUsed,
         artifactPaths: result.artifactPaths,
