@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseRunInsightsArgs } from '../src/run-insights.js';
 import { renderAnalysisMarkdown } from '../src/lib/markdown.js';
+import { buildUkProductionTables } from '../src/lib/production-insights.js';
 
 test('parseRunInsightsArgs supports production-specific filters', () => {
   const args = parseRunInsightsArgs([
@@ -105,4 +106,23 @@ test('renderAnalysisMarkdown includes production snapshot and LinkedIn angles', 
   assert.match(markdown, /## LinkedIn Angles/);
   assert.match(markdown, /Hornsea 2 ranked #2/);
   assert.match(markdown, /## Daily Generation/);
+});
+
+test('buildUkProductionTables keeps biggest drops empty when no farms are down', () => {
+  const tables = buildUkProductionTables([
+    {
+      id: 1,
+      name: 'London Array',
+      current_generation_mwh: 11154.9,
+      previous_generation_mwh: 2762.37,
+      delta_generation_pct: 303.82,
+      delta_generation_mwh: 8392.53,
+      capacity_factor_pct: 10.54,
+      power_mw: 630,
+      mapped_bmu_count: 4,
+    },
+  ]);
+
+  assert.equal(tables.biggestGains.length, 1);
+  assert.deepEqual(tables.biggestDrops, []);
 });

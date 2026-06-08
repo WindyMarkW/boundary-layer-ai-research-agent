@@ -228,10 +228,18 @@ export function buildUkStoryAngles(rows = [], productionWindow) {
     .filter((row) => toNumber(row.capacity_factor_pct) != null)
     .sort((left, right) => compareDescending(left, right, (row) => row.capacity_factor_pct));
   const biggestGain = [...rows]
-    .filter((row) => (toNumber(row.previous_generation_mwh) || 0) >= 250)
+    .filter(
+      (row) =>
+        (toNumber(row.previous_generation_mwh) || 0) >= 250 &&
+        (toNumber(row.delta_generation_pct) || 0) > 0,
+    )
     .sort((left, right) => compareDescending(left, right, (row) => row.delta_generation_pct))[0];
   const biggestDrop = [...rows]
-    .filter((row) => (toNumber(row.previous_generation_mwh) || 0) >= 250)
+    .filter(
+      (row) =>
+        (toNumber(row.previous_generation_mwh) || 0) >= 250 &&
+        (toNumber(row.delta_generation_pct) || 0) < 0,
+    )
     .sort((left, right) => compareAscending(left, right, (row) => row.delta_generation_pct))[0];
   const unmappedLargeFarm = [...rows]
     .filter((row) => (toNumber(row.mapped_bmu_count) || 0) <= 0)
@@ -318,11 +326,19 @@ export function buildUkProductionTables(rows = []) {
     .sort((left, right) => compareDescending(left, right, (row) => row.capacity_factor_pct))
     .slice(0, 10);
   const biggestGains = [...rows]
-    .filter((row) => (toNumber(row.previous_generation_mwh) || 0) >= 250 && toNumber(row.delta_generation_pct) != null)
+    .filter(
+      (row) =>
+        (toNumber(row.previous_generation_mwh) || 0) >= 250 &&
+        (toNumber(row.delta_generation_pct) || 0) > 0,
+    )
     .sort((left, right) => compareDescending(left, right, (row) => row.delta_generation_pct))
     .slice(0, 10);
   const biggestDrops = [...rows]
-    .filter((row) => (toNumber(row.previous_generation_mwh) || 0) >= 250 && toNumber(row.delta_generation_pct) != null)
+    .filter(
+      (row) =>
+        (toNumber(row.previous_generation_mwh) || 0) >= 250 &&
+        (toNumber(row.delta_generation_pct) || 0) < 0,
+    )
     .sort((left, right) => compareAscending(left, right, (row) => row.delta_generation_pct))
     .slice(0, 10);
   const unmappedOperationalFarms = [...rows]
