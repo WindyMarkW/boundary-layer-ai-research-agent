@@ -8,7 +8,7 @@ import { parseIdsValue } from './lib/queries.js';
 dotenv.config();
 
 const DEFAULT_PORT = 3002;
-const DEFAULT_HOST = '0.0.0.0';
+const DEFAULT_HOST = '127.0.0.1';
 const MAX_BODY_BYTES = 1024 * 1024;
 
 class HttpError extends Error {

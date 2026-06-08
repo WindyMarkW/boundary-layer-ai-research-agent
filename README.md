@@ -23,21 +23,25 @@ The repo intentionally follows the same operating model as `boudary-layer-ai-web
 - file-based artifacts under `reports/`
 - small internal HTTP service for server-side triggering
 
+For a Hermes deployment, this repo should be the only process with database credentials. Hermes talks to it over loopback HTTP with a service token, so the orchestration layer can analyze Boundary Layer data without holding raw Supabase access.
+
 ## Suggested architecture
 
 ```text
 Supabase core_* tables
         |
         v
-query packs (portfolio / quality / coverage / priority)
+boundary-layer-ai-research-agent
         |
-        +--> deterministic markdown summaries
+        +--> deterministic query packs
+        +--> optional local AI synthesis
+        +--> internal-only HTTP API on loopback
         |
-        +--> optional AI synthesis (Codex/OpenRouter)
+        v
+Hermes Agent on Hetzner
         |
-        +--> saved artifacts in reports/
-        |
-        +--> internal HTTP endpoint for Hetzner-hosted runs
+        +--> OpenRouter-hosted Hermes model
+        +--> Telegram gateway
 ```
 
 ## Setup
@@ -107,6 +111,7 @@ Endpoints:
 3. `POST /internal/ask-database`
 
 If `RESEARCH_AGENT_SERVICE_TOKEN` is set, send it as `Authorization: Bearer <token>`.
+For a Hermes deployment, bind this service to `127.0.0.1` and keep it off the public internet.
 
 Example request:
 
@@ -122,6 +127,22 @@ Example request:
 }
 ```
 
+## Hermes bridge usage
+
+These commands are for a separate orchestration layer, such as Hermes Agent, that should not hold `DATABASE_URL` directly:
+
+```powershell
+npm run hermes:analysis -- --analysis priority-targets --country "United Kingdom"
+npm run hermes:ask -- --question "What are the biggest UK offshore data issues right now?"
+```
+
+They call the internal HTTP service using:
+
+- `BOUNDARY_LAYER_INTERNAL_URL` (defaults to `http://127.0.0.1:3002`)
+- `BOUNDARY_LAYER_INTERNAL_TOKEN` or `RESEARCH_AGENT_SERVICE_TOKEN`
+
+Add `--json` if you want the full structured result instead of markdown.
+
 ## GitHub and Hetzner
 
 The rollout docs live here:
@@ -129,6 +150,7 @@ The rollout docs live here:
 - [docs/REPO_PLAN.md](docs/REPO_PLAN.md)
 - [docs/GITHUB_PUBLISH.md](docs/GITHUB_PUBLISH.md)
 - [docs/DEPLOY_HETZNER.md](docs/DEPLOY_HETZNER.md)
+- [docs/HERMES_HETZNER_SETUP.md](docs/HERMES_HETZNER_SETUP.md)
 
 ## Recommended first run
 

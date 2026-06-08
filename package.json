@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "ask": "node src/ask-database.js",
+    "hermes:analysis": "node src/hermes-run-analysis.js",
+    "hermes:ask": "node src/hermes-ask.js",
     "hooks:install": "git config core.hooksPath .githooks",
     "insights": "node src/run-insights.js",
     "lint": "node scripts/check-syntax.mjs",
